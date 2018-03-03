@@ -1,0 +1,47 @@
+
+Create new container:
+lxc-create -t download -n my-container
+
+Create privileged container:
+sudo lxc-create -t download -n privileged-container
+
+Stop container:
+lxc-stop -n my-container
+
+Remove container:
+lxc-destroy -n my-container
+
+
+
+status:
+lxc-info -n my-container  //my-conainer = name container
+lxc-ls -f
+
+
+
+Shell inside it with: "Start container in segundo plano
+lxc-attach -n my-container
+
+login in my-container:
+sudo lxc-console -n my-container
+
+Path of containers: /var/lib/lxc
+
+
+Create a network bridge for the LXC son:
+$ sudo nano /etc/network/interfaces
+
+##Bridge  Name ###
+auto br0
+### Bridge Information
+iface br0 inet static
+bridge_ports ens33
+bridge_stp off
+bridge_fd 9
+### Bridge IP ###
+address 192.168.12.15
+netmask 255.255.255.0
+network 192.168.12.0
+broadcast 192.168.12.255
+gateway 192.168.12.2
+dns-nameservers 8.8.8.8
