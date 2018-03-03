@@ -1,3 +1,23 @@
+		LXC Tutorial
+
+//////////////////////////////////////////////////////
+What is a namespace?
+
+parent:
+1 init
+2 foo
+3 blah
+4 deus ex
+5 someprogram
+6 CONTAINER {	(child)
+		1 init
+		2 foo
+		3 deus ex
+		4 someotherprogram
+	    }
+
+Creating a container we are creating a virtual machine
+///////////////////////////////////////////////////////
 
 Create new container:
 lxc-create -t download -n my-container
