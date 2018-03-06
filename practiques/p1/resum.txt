@@ -1,0 +1,82 @@
+Create a container:
+$sudo lxc-create -t ubuntu -n mycontainer
+
+
+Start a container:
+$sudo lxc-start -n mycontainer
+
+
+Stop a container:
+$sudo lxc-stop -nmycontainer
+
+
+Check status:
+$sudo lxc-ls --fancy
+
+
+Connect to the container:
+lxc-attach -n my-container
+lxc-console -n my-container
+ssh username@ipmy-container
+
+
+Configuring static IP:
+
+Location of the saved containers:
+/var/lib/lxc/mycontainer
+
+
+inside file config of any container: /var/lib/lxc/mycontainer/config
+
+We add:
+
+#aja configuration
+lxc.network.ipv4 = 10.0.3.105/24 10.0.3.255
+lxc.network.ipv4.gateway = auto
+
+#lxc.start.auto = 1
+#lxc.start.delay = 15
+#lxc.start.order = 10
+
+
+Now we have an static IP by default, but the DHCP is also providing us
+a dinamic IP. So we need to disable the auto DHCP in order to just get only 1 known static IP
+
+For doing that we need to go to the machine. Inside the machine
+we need to go to /etc/network/interfaces and comment the following line.
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto eth0
+#iface eth0 inet dhcp
+---------------------
+
+
+Now, we can communicate between the root system and the containers.
+The containers only have an IP address but they don't have any 
+interface to connect with Internet. In fact, they won't have never
+an interface which provide them Ethernet connection, so we need to 
+provide them internet using the mother PC. If we look at the communication
+internet interfaces we will see that the containers have an interface
+called eth0 which is mainly configured for an Ethernet connection. This interface
+is not connected to the eth0 interface of the mother PC, although they have the same
+name. One option would be to configure our ethernet mother PC for stablishing an interface
+using the eth0 interface. This is a big error because we need to take in consideration that
+eth0 of the mother PC is reserved for the physical Ethernet of the PC, which is the one who
+provides internet to the PC. 
+
+So, we have a problem. The ethernet comes from an interface which is already prepared for 
+getting the Ethernet connectivity, so until here we are fine. We have a mother PC which has
+an interface from where we receive Internet. Now we need to send this Internet to our containers,
+but we cannot extend the eth0 interface. So, we need to create a "new" interface but using the eth0
+interface. this can sound a bit strange but we are talking about creating a path to connect the eth0
+of your mother PC with the eth0 of the containers. This "new" interface is mainly known as a bridge.
+
+A bridge is like a translator between different interfaces in order to interconnect these interfaces.
+Without a bridge we would be joining two interfaces, converting them into 1. The idea is to have two 
+different interfaces which they can talk between them but they are completely different interfaces.
+
+Now we will configure our bridge:
+
