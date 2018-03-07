@@ -34,7 +34,7 @@ lxc-destroy -n my-container
 
 
 status:
-lxc-info -n my-container  //my-conainer = name container
+lxc-info -n my-container  //my-container = name container
 lxc-ls -f
 
 
