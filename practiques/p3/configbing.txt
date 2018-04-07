@@ -1,0 +1,25 @@
+In this config file it will be shown how to create a DNS server for a local network using bind9.
+
+Installing BIND:
+sudo apt-get install bind9 bind9utils bind9-doc
+
+Setting bind to IPV4 mode:
+sudo vi /etc/default/bind9 
+
+* #run resolvconf?
+* RESOLVCONF=no
+*
+* # startup options for the server
+* OPTIONS="-4 -u bind"
+
+Configure Primary DNS Server
+sudo vi /etc/bind/named.conf.options
+
+* // Creation of a new ACL block, called "trusted".
+*
+* acl "trusted" {
+*		172.20.
+*
+*
+*
+*
