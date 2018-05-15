@@ -1,0 +1,261 @@
+# author: Alejandro Jabalquinto Alegre
+# Date: 7th, April 2018
+
+===============================================================================================
+===============================================================================================
+===============================================================================================
+=   			=========		===========		==	   =	  =======						 ==
+=	    		=		 =			 =			= =    =      =       =                      ==
+=               =========            =          =  =   =      =        =					 ==
+=               =        =           =          =   =  =      =        =                     ==
+=               =        =           =          =    = =      =        =                     ==
+=               =        =           =          =     ==      =       =                      ==
+=               ========        ==========      =      =      =======                        ==
+===============================================================================================
+===============================================================================================
+===============================================================================================
+
+
+
+
+
+In this config file it will be shown how to create a DNS server for a local network using bind9.
+===============================================================================================
+
+Prerequisites:
+
+	Instalation of BIND:
+
+		$ sudo apt-get install bind9 bind9utils bind9-doc
+
+	Instalation of dnsutils:
+
+		$ sudo apt-get install dnsutils
+
+===============================================================================================
+
+Configuration of bind9, it will be separated in the following steps:
+	- Setting bind to IPv4
+	- Introduction of the configuration files of bind9.
+	- Configuration of the general options
+	- Configuration of the localhost options
+	- Configuration of the table of domains and IPs
+
+
+
+
+===============================================================================================
+Setting bind to IPV4 mode:
+===============================================================================================
+
+This first step is just a simple configuration I have seen in the Internet, just to asure that 
+the DNS will only work with IPv4.
+
+
+*****************************
+$sudo vi /etc/default/bind9
+	*****************************
+	*
+	* #run resolvconf?
+	* RESOLVCONF=no
+	*
+	* # startup options for the server
+	* OPTIONS="-4 -u bind"
+	*
+	*****************************
+
+
+
+
+===============================================================================================
+Introduction of the configuration files of bind9
+===============================================================================================
+
+In this part it is shown which is the file that configures BIND.
+
+The bind9 configuration is found in /etc/bind/named.conf, but we actually won't edit this file
+as by default "named.conf" is showing the following:
+***************************************************
+$ vi /etc/bind/named.conf
+***************************************************
+	*
+	* include "/etc/bind/named.conf.options";
+	* include "/etc/bind/named.conf.local";
+	* include "/etc/bind/named.conf.default-zones";
+	*
+	***********************************************
+
+These "include" include 3 files that are already created by default. This is just an organization style which separates the three main
+things that need to be configured for bind.
+
+	- named.conf.options -> file which defines the general options of BIND.
+	- named.conf.local -> file which defines the local DNS domains that you want to run for your server.
+	- named.conf.default-zones -> file which we do not modify, which defines some default zones.
+
+
+
+
+===============================================================================================
+named.conf.options
+===============================================================================================
+
+File which defines the general options of BIND.
+
+By default it is shown the following:
+
+*********************************
+$ vi /etc/bind/named.conf.options
+************************************************************************************
+	*
+	* options {
+	*
+	*	directory "/var/lib/named";
+	*
+	*	// If there is a firewall between you and nameservers you want
+	*	// to talk to, you may need to fix the firewall to allow multiple
+	*	// ports to talk.  See http://www.kb.cert.org/vuls/id/800113
+	*
+	*	// If your ISP provided one or more IP addresses for stable
+	*	// nameservers, you probably want to use them as forwarders.
+	*	// Uncomment the following block and insert the addresses replacing
+	*	// the all-0's placeholder.
+	*   // forwarders {
+	*   //      0.0.0.0;
+	*   // };
+	*
+    *	//========================================================================
+    *	// If BIND logs error messages about the root key being expired,
+	*	// you will need to update your keys.  See https://www.isc.org/bind-keys
+	*	//========================================================================
+	*
+	*	dnssec-validation auto;
+	*	auth-nxdomain no;    # conform to RFC1035
+	*	//listen-on-v6 { any; };
+	*	};
+	*
+	******************************************************************************
+
+
+Explanation of the parameters of options:
+
+	- directory "filename": Specifies the directory in which BIND can find the
+							files containing the zone data. Usually,
+							this is /var/lib/named.
+
+	- forwarders {ip-address}:  Specifies the name servers (mostly of the provider)
+								to which DNS requests should be forwarded if they
+								cannot be resolved directly.
+
+More parameters:
+	- listen-on port 53: Tells BIND on which network interfaces and port to accept
+						 client queries. Port 53 does not need to be specified
+						 explicitly, because 53 is the default port. Enter
+						 127.0.0.1 to permit requests from the local host. If you
+						 omit this entirely, all interfaces are used by default
+
+	- notify no: no prevents other name servers from being informed when changes are
+				 made to the zone data or when the name server is restarted.
+
+***************************
+$ vi /etc/bind/named.conf.local
+	***************************************************
+	* //
+	* // Do any local configuration here
+	* //
+	*
+	* // Consider adding the 1918 zones here, if they are not used in
+	* // your organization
+	* //include " /etc/bind/zones.rfc1918";
+	*
+	* zone "g9.asi.itic.cat" IN {
+	*		type master;
+	*		file "etc/bind/db.g9.asi.itic.cat";
+	*		allow-transfer {172.20.7.5;};
+	* };
+	*****************************************************
+
+This is how we want to configure our named.conf.local for the P3 of ASI
+
+Explanation of this configuration:
+	-A zone is where it is saved the name of the domain to be resolved.
+	 This will be our name domain that the DNS server must resolv.
+
+	-type: master/slave/hint Configures the permissions that
+	 DNS can do.
+
+	-file: The name of the zone file. This file will contain all of
+	 the records and information for this zones (domain-IP).
+
+	-allow-transfer:
+
+Once this file is configured we need to create the following file:
+**************************
+$ vi /etc/bind/db.g9.asi.itic.cat
+	*****************************************************************
+	* $TTL 5H
+	* g9.asi.itic.cat.		IN	SOA		ns.g9.asi.itic.cat.
+	*									alejandrojabalquinto@gmail.com(
+	* 						2014011201
+	*						7200
+	*						3600
+	*						1W
+	*						1W )
+	*
+	*
+	* g9.asi.itic.cat.  	IN	NS		ns.g9.asi.itic.cat.
+	* g9.asi.itic.cat.  	IN 	NS		ns2.g9.asi.itic.cat.
+	*
+	*
+	* ns.g9.asi.itic.cat. 	IN	A		172.20.7.4
+	* ns2.g9.asi.itic.cat.	IN	A		172.20.7.5
+	* g9.asi.itic.cat.		IN	A		172.20.7.6
+	*
+	*
+	****************************************************************
+
+Explanation of the configuration of the file above:
+
+	- $TTL: Time To Live -> The time another nameserver should cache
+							the record for.
+
+	- SOA Record: Declares Start of Authority for a zone.
+		- In this case we are authorizing the g9.asi.itic.cat.
+		- IN = Internet - type of record
+		- email: Person responsible for zone if an actual e-mail used.
+		- 2014011201: Serial (ID of the zone)
+		- 7200: time to refresh
+		- 3600: time to retry
+		- 1W: time to expiry
+		- 1W: Negative cache TTL
+
+	- NS Record:
+
+	- A Record:
+
+With this the DNS Server has been configured. Now you can communicate with a user using the domain name instead of the IP.
+
+Configurations:
+********************************
+$ vi /etc/network/interfaces
+	********************************
+	*
+	* auto lo
+	* iface lo inet loopback
+	*
+	* auto eth0
+	* iface eth0 inet manual
+	* dns-nameservers 127.0.0.1 172.20.6.4
+	*
+	*
+	*********************************
+
+*********************************
+$ vi /etc/resolv.conf
+	*********************************
+	*
+	* nameserver 127.0.0.1
+	* search Home
+	*
+	*********************************
+
+
